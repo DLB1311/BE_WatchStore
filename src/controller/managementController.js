@@ -1,6 +1,6 @@
 const upload = require("../middleware/multer");
 const jwt = require("jsonwebtoken");
-const pool = require("../config/database");
+const pool = require("../config/SQLManager");
 const sql = require("mssql");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
@@ -111,6 +111,7 @@ let getBookingOrderDetails = async (req, res) => {
       .json({ success: false, message: "An error occurred" });
   }
 };
+
 let updateOrderStatusAndAssignEmployee = async (req, res) => {
   try {
     const { maPD } = req.params;

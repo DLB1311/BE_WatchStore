@@ -11,7 +11,7 @@ const tmnCode = config.vnp_TmnCode;
 const secretKey = config.vnp_HashSecret;
 const vnpUrl = config.vnp_Url;
 const returnUrl = config.vnp_ReturnUrl;
-const pool = require("../config/database");
+const pool = require("../config/SQLManager");
 const sql = require('mssql');
 // ... (other routes and middlewares if any)
 paymentRouter.put('/saveTransactionNumber',paymentController.saveTransactionNumber)
