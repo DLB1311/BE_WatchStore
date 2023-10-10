@@ -1,13 +1,21 @@
 const upload = require("../middleware/multer");
-const jwt = require("jsonwebtoken");
-const pool = require("../config/SQLManager");
-const sql = require('mssql');
+// const jwt = require("jsonwebtoken");
+// const pool = require("../config/SQLManager");
+// const sql = require('mssql');
 const auth = require("../middleware/auth");
+
+const WatchDAO = require("../dao/WatchDAO");
+const watchDAO = new WatchDAO();
+
+const BrandDAO = require("../dao/BrandDAO");
+const brandDAO = new BrandDAO();
+
+const TypeDAO = require("../dao/TypeDAO");
+const typeDAO = new TypeDAO();
 
 let getAllBrands = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM HANG");
-    const brands = result.recordset;
+    const brands = await brandDAO.getAllBrands();
     res.status(200).json({ success: true, brands });
     
   } catch (error) {
@@ -21,25 +29,14 @@ let addBrand = async (req, res) => {
 
   try {
     // Kiểm tra xem thương hiệu đã tồn tại hay chưa
-    const existingBrand = await pool.request()
-      .input("MaHang", sql.NVarChar, MaHang)
-      .query("SELECT TOP 1 1 FROM HANG WHERE MaHang = @MaHang");
+    const existingBrandCount = await brandDAO.checkExistBrand(req.body);
 
-    if (existingBrand.recordset.length > 0) {
+    if (existingBrandCount > 0) {
       return res.status(400).json({ success: false, message: "MaHang already exists." });
     }
 
     // Thực hiện thêm mới thương hiệu vào database
-    const insertQuery = `
-      INSERT INTO HANG (MaHang, TenHang, MoTa)
-      VALUES (@MaHang, @TenHang, @MoTa)
-    `;
-
-    await pool.request()
-      .input("MaHang", sql.NVarChar, MaHang)
-      .input("TenHang", sql.NVarChar, TenHang)
-      .input("MoTa", sql.NVarChar, MoTa)
-      .query(insertQuery);
+    await brandDAO.addBrand(req.body);
 
     res.status(201).json({ success: true, message: "Brand added successfully" });
   } catch (error) {
@@ -53,26 +50,14 @@ let updateBrand = async (req, res) => {
 
   try {
     // Kiểm tra xem thương hiệu có tồn tại không
-    const brandResult = await pool.request()
-      .input("MaHang", sql.NVarChar, brandId)
-      .query("SELECT TOP 1 1 FROM HANG WHERE MaHang = @MaHang");
+    const existingBrandCount = await brandDAO.checkExistBrand(req.body);
 
-    if (brandResult.recordset.length === 0) {
+    if (existingBrandCount === 0) {
       return res.status(404).json({ success: false, message: "Brand not found." });
     }
 
     // Cập nhật thông tin của thương hiệu trong database
-    const updateQuery = `
-      UPDATE HANG
-      SET TenHang = @TenHang, MoTa = @MoTa
-      WHERE MaHang = @MaHang
-    `;
-
-    await pool.request()
-      .input("TenHang", sql.NVarChar, TenHang)
-      .input("MoTa", sql.NVarChar, MoTa)
-      .input("MaHang", sql.NVarChar, brandId)
-      .query(updateQuery);
+    await brandDAO.updateBrand(req.params, req.body);
 
     res.status(200).json({ success: true, message: "Brand updated successfully" });
   } catch (error) {
@@ -84,15 +69,14 @@ let deleteBrand = async (req, res) => {
   const { brandId } = req.params;
   try {
     // Check if there are associated watches for the brand
-    
-    const watchResult = await pool.query(`SELECT TOP 1 1 FROM DONGHO WHERE MaHang = '${brandId}' `);
-    if (watchResult.recordset.length > 0) {
+    const watchResult = brandDAO.checkLinkWatchVSBrand(req.params);
+    if (watchResult.length > 0) {
       return res.status(400).json({ success: false, message: "Cannot delete the brand. It has associated watches." });
     }
     
 
     // Delete the brand with the given ID from the database
-    await pool.query(`DELETE FROM HANG WHERE MaHang =  '${brandId}'`);
+    await brandDAO.deleteBrand(req.params);
     
     res.status(200).json({ success: true, message: "Brand deleted successfully" });
   } catch (error) {
@@ -103,8 +87,7 @@ let deleteBrand = async (req, res) => {
 
 let getAllTypes = async (req, res) => {
   try {
-    const result = await pool.query("SELECT * FROM LOAI");
-    const types = result.recordset;
+    const types = await typeDAO.getAllWatchTypes();
     res.status(200).json({ success: true, types });
   } catch (error) {
     console.error(error);
@@ -116,25 +99,13 @@ let addType = async (req, res) => {
 
   try {
     // Kiểm tra xem mã loại đã tồn tại chưa
-    const typeResult = await pool.request()
-      .input("MaLoai", sql.NVarChar, MaLoai)
-      .query("SELECT TOP 1 1 FROM LOAI WHERE MaLoai = @MaLoai");
-
-    if (typeResult.recordset.length > 0) {
+    const typeResultLength = await typeDAO.checkExistWatchType(req.body);
+    if (typeResultLength > 0) {
       return res.status(409).json({ success: false, message: "Type with this ID already exists" });
     }
 
     // Thêm loại mới vào database
-    const insertQuery = `
-      INSERT INTO LOAI (MaLoai, TenLoai, MoTa)
-      VALUES (@MaLoai, @TenLoai, @MoTa)
-    `;
-
-    await pool.request()
-      .input("MaLoai", sql.NVarChar, MaLoai)
-      .input("TenLoai", sql.NVarChar, TenLoai)
-      .input("MoTa", sql.NVarChar, MoTa)
-      .query(insertQuery);
+    await typeDAO.addWatchType(req.body);
 
     res.status(201).json({ success: true, message: "Type added successfully" });
   } catch (error) {
@@ -148,26 +119,13 @@ let updateType = async (req, res) => {
 
   try {
     // Kiểm tra xem loại có tồn tại không
-    const typeResult = await pool.request()
-      .input("MaLoai", sql.NVarChar, typeId)
-      .query("SELECT TOP 1 1 FROM LOAI WHERE MaLoai = @MaLoai");
-
-    if (typeResult.recordset.length === 0) {
+    const typeResultLength = await typeDAO.checkExistWatchType(req.body);
+    if (typeResultLength === 0) {
       return res.status(404).json({ success: false, message: "Type not found" });
     }
 
     // Cập nhật thông tin của loại trong database
-     const updateQuery = `
-      UPDATE LOAI
-      SET TenLoai = @TenLoai, MoTa = @MoTa
-      WHERE MaLoai = @MaLoai
-    `;
-
-    await pool.request()
-      .input("TenLoai", sql.NVarChar, TenLoai)
-      .input("MoTa", sql.NVarChar, MoTa)
-      .input("MaLoai", sql.NVarChar, typeId)
-      .query(updateQuery);
+     await typeDAO.updateWatchType(req.params, req.body);
 
     res.status(200).json({ success: true, message: "Type updated successfully" });
   } catch (error) {
@@ -179,13 +137,13 @@ let deleteType = async (req, res) => {
   const { typeId } = req.params;
   try {
     // Check if there are associated watches for the type
-    const watchResult = await pool.query(`SELECT TOP 1 1 FROM DONGHO WHERE MaLoai = '${typeId}'`);
-    if (watchResult.recordset.length > 0) {
+    const watchResultLength = await typeDAO.checkLinkWatchVSType(req.params);
+    if (watchResultLength > 0) {
       return res.status(400).json({ success: false, message: "Cannot delete the type. It has associated watches." });
     }
 
     // Delete the type with the given ID from the database
-    await pool.query(`DELETE FROM LOAI WHERE MaLoai = '${typeId}'`);
+    await typeDAO.deleteWatchType(req.params);
     
     res.status(200).json({ success: true, message: "Type deleted successfully" });
   } catch (error) {
@@ -196,11 +154,7 @@ let deleteType = async (req, res) => {
 
 let getAllWatches = async (req, res) => {
   try {
-    const result = await pool.query(`SELECT GIW.* ,Hang.TenHang, Hang.Mota ,Loai.TenLoai, Loai.MoTa
-    FROM GetInfoWatches GIW
-    Join Hang On GIW.MaHang = Hang.MaHang
-    Join Loai On GIW.MaLoai = Loai.MaLoai`);
-    const watches = result.recordset;
+    const watches = await watchDAO.getAllWatch();
     res.status(200).json({ success: true, watches });
   } catch (error) {
     console.error(error);
@@ -217,22 +171,7 @@ let addWatch = async (req, res) => {
     const { MaDH, TenDH, SoLuongTon, MoTa, TrangThai, is_new, MaLoai, MaHang } = req.body;
 
     try {
-      const insertQuery = `
-        INSERT INTO dbo.DongHo (MaDH, TenDH, SoLuongTon, MoTa, TrangThai, is_new, MaLoai, MaHang, HinhAnh)
-        VALUES (@MaDH, @TenDH, @SoLuongTon, @MoTa, @TrangThai, @is_new, @MaLoai, @MaHang, @HinhAnh)
-      `;
-
-      await pool.request()
-        .input("MaDH", sql.NVarChar, MaDH)
-        .input("TenDH", sql.NVarChar, TenDH)
-        .input("SoLuongTon", sql.Int, SoLuongTon)
-        .input("MoTa", sql.NVarChar, MoTa)
-        .input("TrangThai", sql.Int, TrangThai)
-        .input("is_new", sql.Bit, is_new)
-        .input("MaLoai", sql.NVarChar, MaLoai)
-        .input("MaHang", sql.NVarChar, MaHang)
-        .input("HinhAnh", sql.NVarChar, req.file.filename)
-        .query(insertQuery);
+      await watchDAO.addWatchInfo(req);
 
       res.status(201).json({
         success: true,
@@ -253,40 +192,8 @@ let updateWatch = async (req, res) => {
     const { MaDH, TenDH, SoLuongTon, MoTa, TrangThai, is_new, MaLoai, MaHang } = req.body;
 
     try {
-      let updateFields = "TenDH = @TenDH, SoLuongTon = @SoLuongTon, MoTa = @MoTa, TrangThai = @TrangThai, is_new = @is_new, MaLoai = @MaLoai, MaHang = @MaHang";
-      const params = {
-        TenDH,
-        SoLuongTon,
-        MoTa,
-        TrangThai,
-        is_new,
-        MaLoai,
-        MaHang,
-        MaDH
-      };
-
-      if (req.file && req.file.filename) {
-        updateFields += ", HinhAnh = @HinhAnh";
-        params.HinhAnh = req.file.filename;
-      }
-
-      const query = `
-        UPDATE dbo.DongHo
-        SET ${updateFields}
-        WHERE MaDH = @MaDH
-      `;
-
-      await pool.request()
-        .input("TenDH", sql.NVarChar, params.TenDH)
-        .input("SoLuongTon", sql.Int, params.SoLuongTon)
-        .input("MoTa", sql.NVarChar, params.MoTa)
-        .input("TrangThai", sql.Int, params.TrangThai)
-        .input("is_new", sql.Bit, params.is_new)
-        .input("MaLoai", sql.NVarChar, params.MaLoai)
-        .input("MaHang", sql.NVarChar, params.MaHang)
-        .input("MaDH", sql.NVarChar, params.MaDH)
-        .input("HinhAnh", sql.NVarChar, params.HinhAnh)
-        .query(query);
+      
+      await watchDAO.updateWatchInfo(req);
 
       res.status(200).json({
         success: true,
@@ -303,15 +210,7 @@ let deleteWatch = async (req, res) => {
 
   try {
     // Kiểm tra xem đồng hồ có liên kết với bảng CTPHIEUDAT hay không
-    const checkReservationQuery = `
-      SELECT COUNT(*) AS TotalReservations
-      FROM CTPHIEUDAT
-      WHERE MaDH = @MaDH
-    `;
-    const reservationResult = await pool.request()
-      .input("MaDH", sql.NVarChar, MaDH)
-      .query(checkReservationQuery);
-    const totalReservations = reservationResult.recordset[0].TotalReservations;
+    const totalReservations = await watchDAO.checkLinkWatchVSOrderDetail(req.params);
 
     if (totalReservations > 0) {
       return res.status(400).json({
@@ -321,22 +220,10 @@ let deleteWatch = async (req, res) => {
     }
 
     // Xóa giá của đồng hồ trong bảng THAYDOIGIA
-    const deletePriceQuery = `
-      DELETE FROM THAYDOIGIA
-      WHERE MaDH = @MaDH
-    `;
-    await pool.request()
-      .input("MaDH", sql.NVarChar, MaDH)
-      .query(deletePriceQuery);
+    await watchDAO.deletePriceInTHAYDOIGIA(req.params);
 
     // Tiến hành xóa đồng hồ
-    const deleteWatchQuery = `
-      DELETE FROM DONGHO
-      WHERE MaDH = @MaDH
-    `;
-    await pool.request()
-      .input("MaDH", sql.NVarChar, MaDH)
-      .query(deleteWatchQuery);
+    await watchDAO.deleteWatchInfo(req.params);
 
     res.status(200).json({
       success: true,
@@ -354,14 +241,8 @@ let getWatchPriceHistory = async (req, res) => {
   const { MaDH } = req.params;
 
   try {
-    const result = await pool.request().input('MaDH', sql.NVarChar(10), MaDH).query(`
-      SELECT *
-      FROM THAYDOIGIA
-      WHERE MaDH = @MaDH
-      Order By THAYDOIGIA.TGThayDoi DESC
-    `);
 
-    const priceHistory = result.recordset;
+    const priceHistory = await watchDAO.getPriceChangeHistory(req.params);
 
     res.status(200).json({ success: true, priceHistory });
   } catch (error) {
@@ -375,17 +256,7 @@ let addPriceChange = async (req, res) => {
   const { MaDH, TGThayDoi, Gia } = req.body;
 
   try {
-    const insertQuery = `
-      INSERT INTO THAYDOIGIA (MaDH, MaNV, TGThayDoi, Gia)
-      VALUES (@MaDH, @MaNV, @TGThayDoi, @Gia)
-    `;
-
-    await pool.request()
-      .input("MaDH", sql.NVarChar(10), MaDH)
-      .input("MaNV", sql.NVarChar(10), userId)
-      .input("TGThayDoi", sql.DateTime, TGThayDoi)
-      .input("Gia", sql.Money, Gia)
-      .query(insertQuery);
+    await watchDAO.addPriceChange(userId, req.body);
 
     res.status(201).json({
       success: true,
@@ -402,18 +273,8 @@ let editPriceChange = async (req, res) => {
   const {MaDH,TGThayDoi, Gia } = req.body;
 
   try {
-    const updateQuery = `
-      UPDATE THAYDOIGIA
-      SET  Gia = @Gia
-      WHERE MaDH = @MaDH and MaNV = @MaNV and TGThayDoi = @TGThayDoi
-    `;
-
-    await pool.request()
-      .input("MaDH", sql.NVarChar(10), MaDH)
-      .input("MaNV", sql.NVarChar(10), userId)
-      .input("TGThayDoi", sql.DateTime, TGThayDoi)
-      .input("Gia", sql.Money, Gia)
-      .query(updateQuery);
+    
+    await watchDAO.editPriceChange(userId, req.body);
 
     res.status(200).json({
       success: true,
@@ -430,16 +291,7 @@ let deletePriceChange = async (req, res) => {
   const { MaDH, MaNV, TGThayDoi } = req.body;
 
   try {
-    const deleteQuery = `
-      DELETE FROM THAYDOIGIA
-      WHERE MaDH = @MaDH AND MaNV = @MaNV AND TGThayDoi = @TGThayDoi
-    `;
-
-    await pool.request()
-      .input("MaDH", sql.NVarChar(10), MaDH)
-      .input("MaNV", sql.NVarChar(10), MaNV)
-      .input("TGThayDoi", sql.DateTime, TGThayDoi)
-      .query(deleteQuery);
+    await watchDAO.deletePriceChange(userId, req.body);
 
     res.status(200).json({
       success: true,
@@ -454,8 +306,7 @@ let deletePriceChange = async (req, res) => {
 
 let getBestSellingWatches = async (req, res) => {
   try {
-    const result = await pool.query("EXEC GetBestSellingWatches");
-    const data = result.recordset;
+    const data = await watchDAO.getBestSellingWatches();
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error(error);
@@ -464,7 +315,7 @@ let getBestSellingWatches = async (req, res) => {
 };
 let getNewWatches = async (req, res) => {
   try {
-    const result = await pool.request().execute("dbo.GetNewWatches");
+    const result = await watchDAO.getAllNewWatches();
 
     const data = [];
     let currentHang = null;
@@ -500,10 +351,7 @@ let getNewWatches = async (req, res) => {
 };
 let getWatchesWithHighestDiscount = async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM GetWatchesWithHighestDiscount ORDER BY PhanTramGiam DESC;"
-    );
-    const data = result.recordset;
+    const data = await watchDAO.getHighestDiscountWatches();
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error(error);
@@ -516,21 +364,15 @@ let getWatchByMaDH = async (req, res) => {
 
   try {
 
-    const result = await pool.request()
-      .input('MaDH', sql.NVarChar(10), MaDH)
-      .query(`SELECT GIW.* ,Hang.TenHang, Hang.Mota ,Loai.TenLoai, Loai.MoTa
-              FROM GetInfoWatches GIW
-              Join Hang On GIW.MaHang = Hang.MaHang
-              Join Loai On GIW.MaLoai = Loai.MaLoai
-                WHERE GIW.MaDH = @MaDH`);
+    const result = await watchDAO.getWatchesByOrderId(req.params);
 
-    if (result.recordset.length === 0) {
+    if (result.length === 0) {
       return res
         .status(404)
         .json({ success: false, message: "Watch not found" });
     }
 
-    const data = result.recordset[0];
+    const data = result[0];
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error(error);
@@ -544,32 +386,8 @@ let searchWatches = async (req, res) => {
   const processedQuery = trimmedQuery.replace(/\s+/g, ' ');
 
   try {
-    const [watchesResult, brandsResult, typesResult] = await Promise.all([
-      pool.query(
-        `SELECT GIW.*, Hang.TenHang FROM GetInfoWatches GIW
-        join Hang on GIW.MaHang = Hang.MaHang
-      WHERE GIW.TenDH LIKE N'%${processedQuery}%'
-      `
-      ),
-      pool.query(
-        `
-        SELECT * 
-        FROM HANG H
-        WHERE H.TenHang LIKE N'%${processedQuery}%'
-      `
-      ),
-      pool.query(
-        `
-        SELECT *
-        FROM LOAI L
-        WHERE L.TenLoai LIKE N'%${processedQuery}%'
-      `
-      ),
-    ]);
-
-    const watches = watchesResult.recordset;
-    const brands = brandsResult.recordset;
-    const types = typesResult.recordset;
+    
+    const [watches, brands, types] = await watchDAO.searchWatch(processedQuery);
 
     const data = {
       hangs: {
@@ -610,31 +428,9 @@ let searchWatches = async (req, res) => {
 let getWatchesByBrandAndType = async (req, res) => {
   const { brands, types } = req.query;
   try {
-    let query = `
-      SELECT GIW.* ,Hang.TenHang, Hang.Mota ,Loai.TenLoai, Loai.MoTa
-      FROM GetInfoWatches GIW
-      JOIN Hang ON GIW.MaHang = Hang.MaHang
-      JOIN Loai ON GIW.MaLoai = Loai.MaLoai`;
+    const result = await watchDAO.getWatchesByBrandAndTypes(req.query);
 
-    let whereClause = [];
-    if (brands) {
-      const brandArr = brands.split(',').map((brand) => brand.trim());
-      whereClause.push(`GIW.MaHang IN ('${brandArr.join("','")}')`);
-    }
-    if (types) {
-      const typeArr = types.split(',').map((type) => type.trim());
-      whereClause.push(`GIW.MaLoai IN ('${typeArr.join("','")}')`);
-    }
-
-    if (whereClause.length > 0) {
-      query += ` WHERE ${whereClause.join(' AND ')}`;
-    }
-    
-    query += ` AND GIW.TrangThai = 1`; // Đặt điều kiện ở đây
-    
-    const result = await pool.query(query);
-
-    const watches = result.recordset.map((watch) => ({
+    const watches = result.map((watch) => ({
       MaDH: watch.MaDH,
       tendh: watch.TenDH,
       tenhang: watch.TenHang,
@@ -655,20 +451,9 @@ let getWatchesByBrandAndType = async (req, res) => {
 let getRandomWatchesByBrand = async (req, res) => {
   const { brandId } = req.params;
   try {
-    const result = await pool.request()
-      .input('brandId', sql.NVarChar(10), brandId)
-      .query(
-        `
-        SELECT TOP 5 GIW.* ,Hang.TenHang, Hang.Mota ,Loai.TenLoai, Loai.MoTa
-        FROM GetInfoWatches GIW
-        Join Hang On GIW.MaHang = Hang.MaHang
-        Join Loai On GIW.MaLoai = Loai.MaLoai
-        WHERE GIW.MaHang = '${brandId}'
-        ORDER BY NEWID();
-        `
-      );
+    const result = await watchDAO.getRandomWatchesByBrand(req.params);
 
-    const watches = result.recordset.map((watch) => ({
+    const watches = result.map((watch) => ({
       MaDH: watch.MaDH,
       tendh: watch.TenDH,
       tenhang: watch.TenHang,
