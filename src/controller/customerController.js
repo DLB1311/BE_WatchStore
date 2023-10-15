@@ -18,11 +18,26 @@ let signIn = async (req, res) => {
   const username = req.body.phoneOrEmail;
   const password = req.body.password;
 
+  if (!username) {
+    return res.status(401).json({
+      success: false,
+      message: process.env.VALIDATION_USERNAME_E001,
+    });
+  }
+
+  if (!password) {
+    return res.status(401).json({
+      success: false,
+      message: process.env.VALIDATION_PASSWORD_E001,
+    });
+  }
+
   try {  
     // Check if the username is a valid email or phone number
     let user;
     if (validator.isEmail(username)) {
       user = await customerDAO.findByEmail(username);
+
     } else {
       user = await customerDAO.findByPhoneNumber(username);
     }

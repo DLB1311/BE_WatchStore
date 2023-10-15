@@ -43,7 +43,7 @@ class CustomerDAO {
         return { success: false, message: process.env.CUSSIGNUP_E001};
       }
   
-      if (SDT.length !== 10 || !/^[0-9]*$/.test(SDT)) {
+      if (SDT.length < 10 || !/^[0-9]*$/.test(SDT)) {
         return { success: false,message:process.env.CUSSIGNUP_VALIDATOR_SDT};
       }
   
@@ -110,6 +110,17 @@ class CustomerDAO {
     }
 
     async updateCustomerProfile(userId, { Ho, Ten, GioiTinh, NgaySinh, DiaChi, Email, password }) {
+
+      if (!Ho || !Ten || !NgaySinh || !DiaChi || !SDT || !Email || !Password) {
+        return { success: false, message: process.env.CUSSIGNUP_E001};
+      }
+      if (SDT.length < 10 || !/^[0-9]*$/.test(SDT)) {
+        return { success: false,message:process.env.CUSSIGNUP_VALIDATOR_SDT};
+      }
+  
+      if (!validator.isEmail(Email)) {
+        return { success: false,message:process.env.CUSSIGNUP_VALIDATOR_EMAIL};
+      }
       try {
         // Check if the user exists
         const userQuery = `SELECT * FROM KHACHHANG WHERE MaKH = @userId`;
