@@ -54,7 +54,7 @@ const deleteNote = async (req, res) => {
     try {
         const wrongStockRecord = await receivedNoteDAO.checkWrongStockQuantity(req.params);
         if (wrongStockRecord.length > 0) 
-            return res.status(400).json({success: false, message: "There is a stock of at least one watch that is less than number on detail note!"});
+            return res.status(400).json({success: false, message: "There is a stock of at least one watch that is less than its number on detail note!"});
         
         await receivedNoteDAO.updateStockByCancelNote(req.params);
         await receivedNoteDAO.deleteAllDetailNotes(req.params);

@@ -64,7 +64,7 @@ const updateOrder = async (req, res) => {
             return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
 
         await wholesaleOrderDAO.updateOrder(req.params, req.body);
-        res.status(200).json({ success: true, message: "Receive note has been updated successfully" });
+        res.status(200).json({ success: true, message: "Wholesale order has been updated successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "An error occurred" });
@@ -78,8 +78,12 @@ const deleteOrder = async (req, res) => {
         if (checkReceivedNote.length > 0)
             return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
 
+        const checkDetailNote = await wholesaleOrderDAO.getDetailOrdersByOrderId(req.params);
+        if (checkDetailNote.length > 0)
+            return res.status(400).json({ success: false, message: "There is at least one detail order link to this order!" });
+
         await wholesaleOrderDAO.deleteOrder(req.params);
-        res.status(200).json({ success: true, message: "Receive note has been removed successfully" });
+        res.status(200).json({ success: true, message: "Wholesale order has been removed successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "An error occurred" });
@@ -93,7 +97,7 @@ const addOrderDetail = async (req, res) => {
             return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
 
         await wholesaleOrderDAO.addDetailOrder(req.params, req.body);
-        return res.status(200).json({success: true, message: "A detail order has been added successfully"});
+        return res.status(200).json({ success: true, message: "A detail order has been added successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "An error occurred" });
@@ -107,7 +111,7 @@ const updateOrderDetail = async (req, res) => {
             return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
 
         await wholesaleOrderDAO.updateDetailOrder(req.params, req.body);
-        return res.status(200).json({success: true, message: "A detail order has been updated successfully"});
+        return res.status(200).json({ success: true, message: "A detail order has been updated successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "An error occurred" });
@@ -121,7 +125,7 @@ const deleteOrderDetail = async (req, res) => {
             return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
 
         await wholesaleOrderDAO.deleteDetailOrder(req.params, req.body);
-        return res.status(200).json({success: true, message: "A detail order has been removed successfully"});
+        return res.status(200).json({ success: true, message: "A detail order has been removed successfully" });
     } catch (error) {
         console.error(error);
         res.status(500).json({ success: false, message: "An error occurred" });
