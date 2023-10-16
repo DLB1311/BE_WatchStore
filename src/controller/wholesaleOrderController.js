@@ -1,5 +1,16 @@
 const WholesaleOrderDAO = require('../dao/WholesaleOrderDAO');
 const wholesaleOrderDAO = new WholesaleOrderDAO();
+const upload = require('../middleware/multer');
+const jwt = require('jsonwebtoken');
+const pool = require('../config/SQLManager');
+const sql = require('mssql');
+const bcrypt = require('bcrypt');
+const validator = require('validator');
+const auth = require('../middleware/auth');
+const fs = require('fs');
+const dotenv = require('dotenv');
+dotenv.config();
+
 
 const getAllOrders = async (req, res) => {
     try {
@@ -47,8 +58,12 @@ const getOrdersWithoutReceive = async (req, res) => {
 };
 
 const addOrder = async (req, res) => {
+    const staffId = auth.getUserIdFromToken(req);
+    const {supplierId, orderId  } = req.body;
+    
+
     try {
-        await wholesaleOrderDAO.addOrder(req.body);
+        await wholesaleOrderDAO.addOrder(supplierId , orderId , staffId);
 
         res.status(200).json({ success: true, message: "A wholesale order has been added successfully" });
     } catch (error) {
@@ -56,6 +71,7 @@ const addOrder = async (req, res) => {
         res.status(500).json({ success: false, message: "An error occurred" });
     }
 };
+
 
 const updateOrder = async (req, res) => {
     try {

@@ -1,6 +1,9 @@
 const pool = require("../config/SQLManager");
 const sql = require("mssql");
 const moment = require('moment');
+const dotenv = require('dotenv');
+dotenv.config();
+
 
 class WholesaleOrderDAO {
     async getAllOrder() {
@@ -36,9 +39,8 @@ class WholesaleOrderDAO {
 
     }
 
-    async addOrder(reqBody) {
+    async addOrder(supplierId , orderId , staffId){
         try {
-            const { supplierId, staffId, orderId } = reqBody;
 
             const insertQuery = `
             INSERT INTO DONDATHANG (MaDDH, NgayDatHang, MaNCC, MaNV)
@@ -111,14 +113,18 @@ class WholesaleOrderDAO {
         try {
             const orders = await pool.request()
                 .input("MaNCC", sql.NVarChar, supplierId)
-                .query("SELECT * FROM DONDATHANG WHERE MaNCC = @MaNCC");
-
+                .query(`
+                    SELECT ddh.*, CASE WHEN pn.maddh IS NOT NULL THEN 1 ELSE 0 END AS danhap
+                    FROM DONDATHANG ddh
+                    LEFT JOIN PHIEUNHAP pn ON ddh.maddh = pn.maddh
+                    WHERE ddh.MaNCC = @MaNCC
+                `);
+    
             return orders.recordset;
         } catch (error) {
             console.log(error);
             throw error;
         }
-
     }
 
     async getDetailOrdersByOrderId(reqParams) {

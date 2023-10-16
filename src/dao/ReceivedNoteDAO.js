@@ -1,5 +1,6 @@
 const pool = require("../config/SQLManager");
 const sql = require("mssql");
+const auth = require("../middleware/auth");
 
 class ReceivedNoteDAO {
     async getAllNote() {
@@ -29,16 +30,16 @@ class ReceivedNoteDAO {
         }
     }
 
-    async addNote(reqParams, reqBody) {
+    async addNote(reqParams,reqBody,staffId) {
         const { orderId } = reqParams;
-        const { noteId, staffId } = reqBody;
+        const { noteId } = reqBody;
         try {
-
+        console.log(noteId+" "+staffId +" "+ orderId);
             const insertQuery = `
                 INSERT INTO PHIEUNHAP (MaPN, NgayTaoPhieu, MaNV, MaDDH)
                 VALUES (@MaPN, @NgayTaoPhieu, @MaNV, @MaDDH)
             `;
-
+        
             await pool.request()
                 .input("MaPN", sql.NVarChar, noteId)
                 .input("NgayTaoPhieu", sql.Date, new Date())

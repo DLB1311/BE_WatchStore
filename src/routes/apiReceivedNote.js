@@ -15,9 +15,12 @@ Router.get('/getNoteBySupplierId/:supplierId', auth.authVerifyTokenStaff, rnCont
 //{ noteId } = req.params
 Router.get('/getDetailNotesByNoteId/:noteId', auth.authVerifyTokenStaff, rnController.getDetailNotesByNoteId);
 
+
 //Thêm phiếu nhập + ctpn + update stock theo maddh, nhận maddh trong request params, mapn + manv trong request body
 //{orderId} = req.params // { noteId, staffId } = req.body
 Router.post('/addNote/:orderId', auth.authVerifyTokenStaff, rnController.addNote);
+
+
 
 //Xóa phiếu nhập + ctpn + update stock theo mapn, nhận mapn trong request params
 //{noteId} = req.params

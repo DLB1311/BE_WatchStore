@@ -1,5 +1,7 @@
 const ReceivedNoteDAO = require('../dao/ReceivedNoteDAO');
 const receivedNoteDAO = new ReceivedNoteDAO();
+const auth = require("../middleware/auth");
+
 
 const getAllNotes = async (req, res) => {
     try {
@@ -39,7 +41,9 @@ const getDetailNotesByNoteId = async (req, res) => {
 
 const addNote = async (req, res) => {
     try {
-        await receivedNoteDAO.addNote(req.params, req.body);
+        const staffId = auth.getUserIdFromToken(req);
+    
+        await receivedNoteDAO.addNote(req.params, req.body, staffId);
         await receivedNoteDAO.addDetailNoteByOrderId(req.params, req.body);
         await receivedNoteDAO.updateStockByNewNote(req.params);
 

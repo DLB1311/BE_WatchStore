@@ -19,8 +19,12 @@ Router.get('/getOrderDetailByOrderId/:orderId', auth.authVerifyTokenStaff, woCon
 //3. Trả về tất cả các đơn hàng chưa có phiếu nhập 
 Router.get('/getOrdersWithoutReceive', auth.authVerifyTokenStaff, woController.getOrdersWithoutReceive);
 
+
+
+
+
 //4. Thêm đơn đặt hàng; nhận mancc, manv, maddh trong request body
-//{ supplierId, staffId, orderId } = req.body
+//{supplierId, orderId  }= req.body
 Router.post('/addOrder', auth.authVerifyTokenStaff, woController.addOrder);
 
 //5. Cập nhật đơn đặt hàng; nhận maddh trong request params, nhận ngày tạo đơn, mancc, manv trong request body
@@ -30,6 +34,14 @@ Router.put('/updateOrder/:orderId', auth.authVerifyTokenStaff, woController.upda
 //6. Xóa đơn đặt hàng theo maddh, không thể xóa nếu có ctddh liên quan, nhận maddh trong request params
 //{orderId} = req.params
 Router.delete('/deleteOrder/:orderId', auth.authVerifyTokenStaff, woController.deleteOrder);
+
+
+
+
+
+
+
+
 
 //7. Thêm chi tiết đơn đặt hàng, nhận maddh trong request params, nhận madh, soluong, dongia trong request body
 //{orderId} = req.params // { watchId, quantity, price } = reqBody
