@@ -19,7 +19,7 @@ const getAllOrders = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001});
 
     }
 };
@@ -31,7 +31,7 @@ const getOrdersBySupplierId = async (req, res) => {
         res.status(200).json({ success: true, orders });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message:process.env.ERROR_E001 });
     }
 };
 
@@ -42,7 +42,7 @@ const getOrderDetailByOrderId = async (req, res) => {
         res.status(200).json({ success: true, orders });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001 });
     }
 };
 
@@ -53,7 +53,7 @@ const getOrdersWithoutReceive = async (req, res) => {
         res.status(200).json({ success: true, orders });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001});
     }
 };
 
@@ -65,10 +65,10 @@ const addOrder = async (req, res) => {
     try {
         await wholesaleOrderDAO.addOrder(supplierId , orderId , staffId);
 
-        res.status(200).json({ success: true, message: "A wholesale order has been added successfully" });
+        res.status(200).json({ success: true, message: process.env.ADD_WHOLESALEORDER_SUCCESS});
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001});
     }
 };
 
@@ -77,13 +77,13 @@ const updateOrder = async (req, res) => {
     try {
         const checkReceivedNote = await wholesaleOrderDAO.checkReceivedNoteExisted(req.params);
         if (checkReceivedNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.UPPDATE_WHOLESALEORDER_ERROR });
 
         await wholesaleOrderDAO.updateOrder(req.params, req.body);
-        res.status(200).json({ success: true, message: "Wholesale order has been updated successfully" });
+        res.status(200).json({ success: true, message: process.env.UPPDATE_WHOLESALEORDER_SUCCESS });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001 });
     }
 
 };
@@ -92,17 +92,17 @@ const deleteOrder = async (req, res) => {
     try {
         const checkReceivedNote = await wholesaleOrderDAO.checkReceivedNoteExisted(req.params);
         if (checkReceivedNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.DEL_WHOLESALEORDER_ERROR1 });
 
         const checkDetailNote = await wholesaleOrderDAO.getDetailOrdersByOrderId(req.params);
         if (checkDetailNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is at least one detail order link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.DEL_WHOLESALEORDER_ERROR2 });
 
         await wholesaleOrderDAO.deleteOrder(req.params);
-        res.status(200).json({ success: true, message: "Wholesale order has been removed successfully" });
+        res.status(200).json({ success: true, message: process.env.DEL_WHOLESALEORDER_SUCCESS });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001 });
     }
 };
 
@@ -110,13 +110,13 @@ const addOrderDetail = async (req, res) => {
     try {
         const checkReceivedNote = await wholesaleOrderDAO.checkReceivedNoteExisted(req.params);
         if (checkReceivedNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.ADD_WHOLESALEORDERDETAIL_ERROR});
 
         await wholesaleOrderDAO.addDetailOrder(req.params, req.body);
-        return res.status(200).json({ success: true, message: "A detail order has been added successfully" });
+        return res.status(200).json({ success: true, message: process.env.ADD_WHOLESALEORDERDETAIL_SUCCESS});
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001});
     }
 };
 
@@ -124,13 +124,13 @@ const updateOrderDetail = async (req, res) => {
     try {
         const checkReceivedNote = await wholesaleOrderDAO.checkReceivedNoteExisted(req.params);
         if (checkReceivedNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.UPDATE_WHOLESALEORDERDETAIL_ERROR });
 
         await wholesaleOrderDAO.updateDetailOrder(req.params, req.body);
-        return res.status(200).json({ success: true, message: "A detail order has been updated successfully" });
+        return res.status(200).json({ success: true, message: process.env.UPDATE_WHOLESALEORDERDETAIL_SUCCESS });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001 });
     }
 };
 
@@ -138,13 +138,13 @@ const deleteOrderDetail = async (req, res) => {
     try {
         const checkReceivedNote = await wholesaleOrderDAO.checkReceivedNoteExisted(req.params);
         if (checkReceivedNote.length > 0)
-            return res.status(400).json({ success: false, message: "There is a received note link to this order!" });
+            return res.status(400).json({ success: false, message: process.env.UPDATE_WHOLESALEORDERDETAIL_ERROR});
 
         await wholesaleOrderDAO.deleteDetailOrder(req.params, req.body);
-        return res.status(200).json({ success: true, message: "A detail order has been removed successfully" });
+        return res.status(200).json({ success: true, message: process.env.DEL_WHOLESALEORDERDETAIL_SUCCESS });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ success: false, message: "An error occurred" });
+        res.status(500).json({ success: false, message: process.env.ERROR_E001 });
     }
 };
 

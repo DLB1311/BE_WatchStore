@@ -5,8 +5,8 @@ const sql = require('mssql');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const auth = require("../middleware/auth");
-const dotenv = require("dotenv");
 
+const dotenv = require("dotenv");
 dotenv.config();
 
 const paypal = require('paypal-rest-sdk');
@@ -25,7 +25,7 @@ const saveTransactionNumber = async (req, res) => {
     const parsedOrderId = parseInt(orderId, 10); // Parse orderId as an integer
 
     if (isNaN(parsedOrderId)) {
-      return res.status(400).json({ success: false, message: "Invalid orderId. It must be a valid number." });
+      return res.status(400).json({ success: false, message: process.env.PAYMENT_E001 });
     }
 
     const maPD = parsedOrderId; 
@@ -51,11 +51,11 @@ const saveTransactionNumber = async (req, res) => {
         .input('SoLuong', sql.Int, SoLuong)
         .query(updateInventoryQuery);
     }
-    return res.status(200).json({ success: true, message: "Transaction number saved successfully" });
+    return res.status(200).json({ success: true, message: process.env.PAYMENT_SUCCESS});
   } catch (error) {
     console.error(error);
 
-    return res.status(500).json({ success: false, message: "An error occurred" });
+    return res.status(500).json({ success: false, message: process.env.ERROR_E001 });
   }
 };
 
