@@ -109,9 +109,9 @@ class CustomerDAO {
       }
     }
 
-    async updateCustomerProfile(userId, { Ho, Ten, GioiTinh, NgaySinh, DiaChi, Email, password }) {
+    async updateCustomerProfile(userId, { Ho, Ten, GioiTinh, NgaySinh, DiaChi, Email, SDT, Password }) {
 
-      if (!Ho || !Ten || !NgaySinh || !DiaChi || !SDT || !Email || !Password) {
+      if (!Ho || !Ten || !NgaySinh || !DiaChi  || !Email || !Password) {
         return { success: false, message: process.env.CUSSIGNUP_E001};
       }
       if (SDT.length < 10 || !/^[0-9]*$/.test(SDT)) {
@@ -130,16 +130,24 @@ class CustomerDAO {
         if (!user) {
           return { success: false, message: process.env.GETCUS_E001};
         }
-  
+
+        // Check if the phone number already exists in the database
+        const checkPhoneNumberQuery = `SELECT * FROM KHACHHANG WHERE SDT = @SDT AND MaKH != @userId`;
+        const phoneNumberResult = await pool.request().input('SDT', sql.NVarChar(15), SDT).input('userId', sql.Int, userId).query(checkPhoneNumberQuery);
+        const existingUserWithPhoneNumber = phoneNumberResult.recordset[0];
+        if (existingUserWithPhoneNumber) {
+          return { success: false, message: process.env.CUSSIGNUP_PHONE_EXISTS };
+        }
+
         // Update the user's profile data in the database
         let updateQuery = `
           UPDATE KHACHHANG
-          SET Ho = @Ho, Ten = @Ten, GioiTinh = @GioiTinh, NgaySinh = @NgaySinh, DiaChi = @DiaChi, Email = @Email
+          SET Ho = @Ho, Ten = @Ten, GioiTinh = @GioiTinh, NgaySinh = @NgaySinh, DiaChi = @DiaChi, Email = @Email, SDT = @SDT
           WHERE MaKH = @userId
-        `;
+        `
   
         // Only update the password if it is provided
-        if (password) {
+        if (Password) {
           updateQuery = `
             UPDATE KHACHHANG
             SET Ho = @Ho, Ten = @Ten, GioiTinh = @GioiTinh, NgaySinh = @NgaySinh, DiaChi = @DiaChi, Email = @Email, Password = @password
@@ -154,7 +162,7 @@ class CustomerDAO {
           .input('NgaySinh', sql.Date, NgaySinh)
           .input('DiaChi', sql.NVarChar(200), DiaChi)
           .input('Email', sql.NVarChar(50), Email)
-          .input('password', sql.NVarChar(255), password) // Add password input here
+          .input('password', sql.NVarChar(255), Password) // Add password input here
           .input('userId', sql.Int, userId)
           .query(updateQuery);
   
@@ -199,6 +207,8 @@ class CustomerDAO {
 
     async placeOrder(userId, lastName, firstName, address, phoneNumber, cartItems) {
       try {
+
+       
         // Begin a transaction
         const transaction = new sql.Transaction(pool);
   

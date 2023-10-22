@@ -187,6 +187,13 @@ const changeStaffPassword = async (req, res) => {
   const newPassword = req.body.newPassword;
 
   try {
+    if (!newPassword) {
+    return res.status(500).json({
+      success: false,
+      message: process.env.VALIDATION_PASSWORD_E001,
+    });
+    }
+
     // Call the StaffDAO method to change the staff member's password
     await staffDAO.changeStaffPassword(userId, currentPassword, newPassword);
 

@@ -106,7 +106,7 @@ let updateProfile = async (req, res) => {
     return res.status(401).json({ success: false, message: process.env.UNAUTHORIZED_ERROR });
   }
 
-  const { Ho, Ten, GioiTinh, NgaySinh, DiaChi, Email, password } = req.body;
+  const { Ho, Ten, GioiTinh, NgaySinh, DiaChi, SDT,Email, Password } = req.body;
 
   try {
     const result = await customerDAO.updateCustomerProfile(userId, {
@@ -116,7 +116,8 @@ let updateProfile = async (req, res) => {
       NgaySinh,
       DiaChi,
       Email,
-      password,
+      SDT,
+      Password,
     });
 
     if (result.success) {
@@ -162,6 +163,9 @@ const placeOrder = async (req, res) => {
 
     const { lastName, firstName, address, phoneNumber, cartItems } = req.body;
 
+    if (!userId || !lastName || !firstName || !address || !phoneNumber || !cartItems) {
+      return res.status(500).json({ success: false, message: process.env.CUSSIGNUP_E001});
+    }
     const result = await customerDAO.placeOrder(userId, lastName, firstName, address, phoneNumber, cartItems);
 
     if (result.success) {
