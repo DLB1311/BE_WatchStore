@@ -51,9 +51,8 @@ const addNote = async (req, res) => {
         await receivedNoteDAO.updateStockByNewNote(req.params);
 
         res.status(200).json({ success: true, message: process.env.RECEIVEDNOTE_SUCCESS});
-    } catch (error) {
-        console.error();
-        res.status(500).json({ success: false, message: process.env.ERROR_E001  });
+    } catch (error) { 
+        res.status(500).json({ success: false, message: error  });
     }
 };
 
